@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizMaster</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: { "display": ["Work Sans"] },
+                },
+            },
+        }
+    </script>
+    <style>
+        .answer-correct {
+            background-color: #d1fae5 !important; /* Tailwind green-100 */
+            border-color: #10b981 !important; /* Tailwind green-500 */
+        }
+        .dark .answer-correct {
+            background-color: rgba(16, 185, 129, 0.2) !important;
+            border-color: #10b981 !important;
+        }
+        .answer-incorrect {
+            background-color: #fee2e2 !important; /* Tailwind red-100 */
+            border-color: #ef4444 !important; /* Tailwind red-500 */
+        }
+        .dark .answer-incorrect {
+            background-color: rgba(239, 68, 68, 0.2) !important;
+            border-color: #ef4444 !important;
+        }
+        .faded {
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="flex flex-col min-h-screen">
+    <header class="bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm sticky top-0 z-10 border-b border-primary/20 dark:border-primary/30">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <div class="text-primary">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+                    </div>
+                    <h1 id="header-title" class="text-xl font-bold text-gray-900 dark:text-white">QuizMaster</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <!-- Quiz Selection Container -->
+        <div id="selection-container" class="max-w-4xl mx-auto bg-white dark:bg-background-dark/50 rounded-xl shadow-lg border border-primary/20 dark:border-primary/30 overflow-hidden p-6 sm:p-8 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Wähle ein Quiz aus</h2>
+            <div class="max-w-xs mx-auto">
+                <label for="quiz-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">Quiz-Thema:</label>
+                <select id="quiz-selector" name="quiz-selector" class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm">
+                    <!-- Optionen werden dynamisch per JavaScript geladen -->
+                </select>
+            </div>
+            <button id="start-selected-quiz-button" class="mt-8 px-8 py-3 rounded-lg font-semibold bg-primary text-white hover:bg-opacity-90 transition-colors">
+                Quiz starten
+            </button>
+        </div>
+
+        <!-- Main Quiz Container -->
+        <div id="quiz-container" class="hidden max-w-4xl mx-auto bg-white dark:bg-background-dark/50 rounded-xl shadow-lg border border-primary/20 dark:border-primary/30 overflow-hidden">
+            <div class="p-6 sm:p-8">
+                <div class="mb-6">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Fortschritt</p>
+                    <div class="mt-2 h-2.5 w-full rounded-full bg-primary/20 dark:bg-primary/30">
+                        <div id="progress-bar" class="h-2.5 rounded-full bg-primary transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="question-counter" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Frage wird geladen...</p>
+                </div>
+                <h2 id="question-text" class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Frage wird geladen...</h2>
+                <div id="answer-buttons" class="space-y-4">
+                    <!-- Answers will be dynamically inserted here -->
+                </div>
+            </div>
+            <div class="px-6 sm:px-8 py-4 bg-primary/5 dark:bg-primary/10 border-t border-primary/20 dark:border-primary/30 flex justify-end items-center">
+                <button id="next-button" class="px-6 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-opacity-90 transition-colors" style="display: none;">
+                    Nächste Frage
+                </button>
+            </div>
+        </div>
+
+        <!-- Score Container (initially hidden) -->
+        <div id="score-container" class="hidden max-w-4xl mx-auto bg-white dark:bg-background-dark/50 rounded-xl shadow-lg border border-primary/20 dark:border-primary/30 overflow-hidden">
+             <div class="p-8 sm:p-12 text-center">
+                <h2 id="score-text" class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Dein Ergebnis</h2>
+             </div>
+             <div class="px-6 sm:px-8 py-4 bg-primary/5 dark:bg-primary/10 border-t border-primary/20 dark:border-primary/30 flex justify-center items-center">
+                <button id="restart-button" class="px-6 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-opacity-90 transition-colors">
+                    Quiz neustarten
+                </button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+    const quizData = {
+        "entwicklungspsychologie": {
+            title: "Quiz: Entwicklungspsychologie",
+            questions: [
+                { question: "Was versteht man unter 'Objektpermanenz'?", answers: [{ text: "Die Fähigkeit, Objekte nach Farbe zu sortieren.", correct: false }, { text: "Das Wissen, dass Objekte weiter existieren, auch wenn man sie nicht sieht.", correct: true }, { text: "Die Vorliebe eines Kindes für ein bestimmtes Spielzeug.", correct: false }, { text: "Die Fähigkeit, die Perspektive einer anderen Person zu übernehmen.", correct: false }] },
+                { question: "Welcher Psychologe ist berühmt für seine Theorie der kognitiven Entwicklung in Stufen (sensomotorisch, präoperational etc.)?", answers: [{ text: "Sigmund Freud", correct: false }, { text: "B.F. Skinner", correct: false }, { text: "Jean Piaget", correct: true }, { text: "Iwan Pawlow", correct: false }] },
+                { question: "Die 'fremde Situation' ist ein Experiment, um was bei Kleinkindern zu untersuchen?", answers: [{ text: "Die Intelligenz", correct: false }, { text: "Das Bindungsverhalten zur Bezugsperson", correct: true }, { text: "Die motorischen Fähigkeiten", correct: false }, { text: "Die Sprachentwicklung", correct: false }] },
+                { question: "Was besagt das 'Nature vs. Nurture'-Konzept in der Entwicklungspsychologie?", answers: [{ text: "Es geht um den Unterschied zwischen Stadt- und Landkindern.", correct: false }, { text: "Es beschreibt den Konflikt zwischen Geschwistern.", correct: false }, { text: "Es ist die Debatte, ob Entwicklung primär durch Anlagen (Gene) oder Umwelt (Erziehung) bestimmt wird.", correct: true }, { text: "Es untersucht, wie die Ernährung die Entwicklung beeinflusst.", correct: false }] },
+                { question: "In welcher von Piagets Stufen beginnen Kinder, logisch über konkrete Ereignisse nachzudenken?", answers: [{ text: "Sensomotorische Stufe", correct: false }, { text: "Präoperationale Stufe", correct: false }, { text: "Konkret-operationale Stufe", correct: true }, { text: "Formal-operationale Stufe", correct: false }] },
+                { question: "Was ist ein zentrales Merkmal der Adoleszenz (Jugendalter)?", answers: [{ text: "Die Entwicklung der Objektpermanenz.", correct: false }, { text: "Die Suche nach der eigenen Identität.", correct: true }, { text: "Der Beginn des Sprechens in Zwei-Wort-Sätzen.", correct: false }, { text: "Das Erlernen des aufrechten Gangs.", correct: false }] },
+                { question: "Lev Vygotskys Konzept der 'Zone der proximalen Entwicklung' beschreibt...", answers: [{ text: "den Abstand, den ein Kind zu seinen Eltern halten sollte.", correct: false }, { text: "den Bereich zwischen dem, was ein Kind alleine kann, und dem, was es mit Hilfe lernen kann.", correct: true }, { text: "die Phase, bevor ein Kind laufen lernt.", correct: false }, { text: "die geografische Zone, in der ein Kind aufwächst.", correct: false }] },
+                { question: "Was versteht man unter 'Theory of Mind'?", answers: [{ text: "Die Fähigkeit, die eigenen Gedanken zu lesen.", correct: false }, { text: "Eine psychologische Theorie über das Gehirn.", correct: false }, { text: "Die Fähigkeit zu verstehen, dass andere Menschen eigene Gedanken, Gefühle und Absichten haben.", correct: true }, { text: "Die Idee, dass der Geist wie ein Computer funktioniert.", correct: false }] },
+                { question: "Welcher Entwicklungsbereich befasst sich mit Veränderungen im Denken, Problemlösen und Sprache?", answers: [{ text: "Die körperliche Entwicklung", correct: false }, { text: "Die soziale Entwicklung", correct: false }, { text: "Die kognitive Entwicklung", correct: true }, { text: "Die emotionale Entwicklung", correct: false }] },
+                { question: "Ein Baby, das lächelt, wenn es ein bekanntes Gesicht sieht, zeigt eine frühe Form von...", answers: [{ text: "sozialer Interaktion.", correct: true }, { text: "abstraktem Denken.", correct: false }, { text: "Trotzverhalten.", correct: false }, { text: "logischem Schlussfolgern.", correct: false }] },
+                { question: "Erik Eriksons Stufenmodell der psychosozialen Entwicklung beschreibt...", answers: [{ text: "nur die Entwicklung im Kindesalter.", correct: false }, { text: "Konflikte, die in verschiedenen Lebensphasen gelöst werden müssen.", correct: true }, { text: "die Entwicklung der Motorik.", correct: false }, { text: "ausschließlich die sexuelle Entwicklung.", correct: false }] },
+                { question: "Wenn ein Kind glaubt, dass der Mond ihm folgt, ist das ein Beispiel für...", answers: [{ text: "Egozentrismus.", correct: true }, { text: "eine sichere Bindung.", correct: false }, { text: "Objektpermanenz.", correct: false }, { text: "eine Identitätskrise.", correct: false }] },
+                { question: "Die Bindungstheorie, entwickelt von John Bowlby, besagt, dass...", answers: [{ text: "Kinder am besten alleine aufwachsen.", correct: false }, { text: "eine frühe, sichere Bindung zu einer Bezugsperson für die gesunde Entwicklung entscheidend ist.", correct: true }, { text: "zu viel Nähe zu den Eltern schädlich ist.", correct: false }, { text: "Bindung nur durch die Nahrungsaufnahme entsteht.", correct: false }] },
+                { question: "Was ist ein typisches Merkmal der präoperationalen Stufe nach Piaget (ca. 2-7 Jahre)?", answers: [{ text: "Die Fähigkeit zur wissenschaftlichen Hypothesenbildung.", correct: false }, { text: "Logisches Denken über abstrakte Konzepte.", correct: false }, { text: "Symbolisches Spiel (z.B. ein Stock wird zum Pferd).", correct: true }, { text: "Das Verstehen von komplexen moralischen Dilemmata.", correct: false }] },
+                { question: "Warum ist das Spiel für die kindliche Entwicklung so wichtig?", answers: [{ text: "Es ist nur ein Zeitvertreib ohne tieferen Zweck.", correct: false }, { text: "Es ist unwichtig, solange das Kind genug lernt.", correct: false }, { text: "Es fördert kognitive, soziale, emotionale und motorische Fähigkeiten.", correct: true }, { text: "Es dient hauptsächlich dazu, die Eltern zu entlasten.", correct: false }] }
+            ]
+        },
+        "bindungstheorie": {
+            title: "Quiz: Bindungstheorie",
+            questions: [
+                { question: "Wer gilt als Begründer der Bindungstheorie?", answers: [{ text: "Sigmund Freud", correct: false }, { text: "Jean Piaget", correct: false }, { text: "John Bowlby", correct: true }, { text: "B.F. Skinner", correct: false }] },
+                { question: "Was ist die zentrale Idee der Bindungstheorie?", answers: [{ text: "Kinder brauchen so viel Spielzeug wie möglich.", correct: false }, { text: "Eine enge, emotionale Beziehung zu mindestens einer Bezugsperson ist für die Entwicklung entscheidend.", correct: true }, { text: "Kinder sollten so früh wie möglich unabhängig sein.", correct: false }, { text: "Die Intelligenz eines Kindes ist angeboren und unveränderlich.", correct: false }] },
+                { question: "Welche Funktion hat eine 'sichere Basis' (secure base) in der Bindungstheorie?", answers: [{ text: "Ein Ort, an dem das Kind schlafen kann.", correct: false }, { text: "Ein sicherer Ort, von dem aus das Kind die Welt erkunden kann und zu dem es zurückkehren kann.", correct: true }, { text: "Ein spezieller Stuhl für das Kind.", correct: false }, { text: "Die finanzielle Sicherheit der Familie.", correct: false }] },
+                { question: "Was ist ein typisches Verhalten eines sicher gebundenen Kindes in der 'fremden Situation'?", answers: [{ text: "Es ignoriert die Bezugsperson komplett.", correct: false }, { text: "Es ist bei Trennung kurz beunruhigt, freut sich aber bei der Wiederkehr und lässt sich trösten.", correct: true }, { text: "Es klammert die ganze Zeit und erkundet gar nicht.", correct: false }, { text: "Es ist wütend und lässt sich bei der Wiederkehr nicht beruhigen.", correct: false }] },
+                { question: "Welcher der folgenden ist KEIN anerkannter Bindungsstil?", answers: [{ text: "Sicher gebunden", correct: false }, { text: "Unsicher-vermeidend gebunden", correct: false }, { text: "Unsicher-ambivalent gebunden", correct: false }, { text: "Chaotisch gebunden", correct: true }] },
+                { question: "Was versteht man unter 'Feinfühligkeit' der Bezugsperson?", answers: [{ text: "Die Fähigkeit, die Signale des Kindes wahrzunehmen, richtig zu deuten und angemessen darauf zu reagieren.", correct: true }, { text: "Die Fähigkeit, besonders leise zu sein, wenn das Kind schläft.", correct: false }, { text: "Die Fähigkeit, dem Kind immer seinen Willen zu lassen.", correct: false }, { text: "Die Fähigkeit, das Kind körperlich stark zu machen.", correct: false }] },
+                { question: "In welchem Alter ist die Bindung zu einer Bezugsperson typischerweise am stärksten ausgeprägt?", answers: [{ text: "Direkt nach der Geburt.", correct: false }, { text: "Zwischen 6 Monaten und 2 Jahren.", correct: true }, { text: "Im Grundschulalter (6-10 Jahre).", correct: false }, { text: "In der Pubertät (12-18 Jahre).", correct: false }] },
+                { question: "Was ist das 'innere Arbeitsmodell' der Bindung?", answers: [{ text: "Ein Plan, wie man mit dem Kind spielt.", correct: false }, { text: "Eine Art geistige Vorstellung über sich selbst und andere, die aus frühen Bindungserfahrungen entsteht.", correct: true }, { text: "Die Bedienungsanleitung für einen Kinderwagen.", correct: false }, { text: "Ein psychologischer Test für Eltern.", correct: false }] },
+                { question: "Kann sich ein Bindungsstil im Laufe des Lebens verändern?", answers: [{ text: "Nein, er ist für immer festgelegt.", correct: false }, { text: "Ja, durch neue, korrigierende Beziehungserfahrungen kann er sich ändern.", correct: true }, { text: "Nur bei Jungen, nicht bei Mädchen.", correct: false }, { text: "Nur wenn man den Therapeuten wechselt.", correct: false }] },
+                { question: "Was bedeutet 'unsicher-vermeidende' Bindung?", answers: [{ text: "Das Kind sucht ständig Nähe und ist sehr anhänglich.", correct: false }, { text: "Das Kind zeigt bei Trennung kaum Stress und ignoriert die Bezugsperson bei Wiederkehr.", correct: true }, { text: "Das Kind ist immer fröhlich und ausgeglichen.", correct: false }, { text: "Das Kind kann nicht zwischen fremden und bekannten Personen unterscheiden.", correct: false }] },
+                { question: "Warum ist eine sichere Bindung für die spätere Entwicklung vorteilhaft?", answers: [{ text: "Sie garantiert einen hohen IQ.", correct: false }, { text: "Sie ist eine gute Grundlage für soziales Selbstvertrauen und gesunde Beziehungen.", correct: true }, { text: "Sicher gebundene Kinder müssen nie wieder weinen.", correct: false }, { text: "Sie führt automatisch zu beruflichem Erfolg.", correct: false }] },
+                { question: "An wen kann ein Kind eine Bindung aufbauen?", answers: [{ text: "Nur an die leibliche Mutter.", correct: false }, { text: "Nur an die Eltern.", correct: false }, { text: "An jede Person, die sich beständig und feinfühlig um das Kind kümmert (z.B. Vater, Großeltern, Adoptiveltern).", correct: true }, { text: "Nur an Frauen.", correct: false }] },
+                { question: "Was ist ein 'unsicher-ambivalenter' (oder 'unsicher-ängstlicher') Bindungsstil?", answers: [{ text: "Das Kind ist sehr unabhängig und braucht niemanden.", correct: false }, { text: "Das Kind ist bei Trennung extrem gestresst und verhält sich bei Wiederkehr widersprüchlich (Nähe suchend und zugleich abwehrend).", correct: true }, { text: "Das Kind erkundet die Umgebung ohne Angst.", correct: false }, { text: "Das Kind reagiert auf alle Erwachsenen gleich freundlich.", correct: false }] },
+                { question: "Welche Rolle spielt Körperkontakt (z.B. Kuscheln) für die Bindung?", answers: [{ text: "Er ist unwichtig, solange das Kind genug zu essen hat.", correct: false }, { text: "Er ist sehr wichtig und fördert die Ausschüttung von Bindungshormonen wie Oxytocin.", correct: true }, { text: "Er verwöhnt das Kind und macht es unselbstständig.", correct: false }, { text: "Er ist nur in den ersten Lebenswochen von Bedeutung.", correct: false }] },
+                { question: "Was ist das Hauptziel des Bindungsverhaltens eines Kindes?", answers: [{ text: "Die Bezugsperson zu kontrollieren.", correct: false }, { text: "Nähe und Schutz von der Bezugsperson zu erhalten, besonders in stressigen Situationen.", correct: true }, { text: "So viel Aufmerksamkeit wie möglich zu bekommen.", correct: false }, { text: "Die eigenen Bedürfnisse immer durchzusetzen.", correct: false }] }
+            ]
+        },
+        "gaming-disorder": {
+            title: "Quiz: Gaming Disorder",
+            questions: [
+                { question: "Was ist die Hauptneuerung bei der Klassifikation der Gaming Disorder in der ICD-11 im Vergleich zur ICD-10?", answers: [{ text: "Die ICD-11 ordnet sie den Verhaltenssüchten zu.", correct: false }, { text: "Sie wird erstmals als eigene psychische Störung klassifiziert.", correct: true }, { text: "Der Fokus liegt auf Online-Gaming.", correct: false }, { text: "Sie wird als eine Subkategorie der substanzgebundenen Störungen betrachtet.", correct: false }] },
+                { question: "Welcher Bereich im Gehirn ist maßgeblich am Belohnungssystem beteiligt, das auch bei Gaming Disorder eine Rolle spielt?", answers: [{ text: "Die Amygdala.", correct: false }, { text: "Der Hippocampus.", correct: false }, { text: "Der Nucleus accumbens.", correct: true }, { text: "Das Kleinhirn.", correct: false }] },
+                { question: "Warum werden komorbide Störungen wie Depression und ADHS oft im Kontext von Gaming Disorder beobachtet?", answers: [{ text: "Weil das Gaming die Ursache dieser Störungen ist.", correct: false }, { text: "Weil sie oft als eine Form der Selbstmedikation oder Bewältigungsstrategie (Coping) dienen.", correct: true }, { text: "Weil sie genetisch aneinander gekoppelt sind.", correct: false }, { text: "Weil Gaming die körperliche Aktivität reduziert.", correct: false }, { text: "Es gibt keinen gesicherten Zusammenhang.", correct: false }] },
+                { question: "Wie unterscheidet sich der Begriff Gaming Disorder von exzessivem Gaming?", answers: [{ text: "Es gibt keinen Unterschied.", correct: false }, { text: "Exzessives Gaming beinhaltet eine klinisch signifikante Beeinträchtigung.", correct: false }, { text: "Gaming Disorder liegt erst vor, wenn auch soziale Probleme auftreten.", correct: false }, { text: "Gaming Disorder ist durch das Fortsetzen des Verhaltens trotz negativer Konsequenzen gekennzeichnet.", correct: true }, { text: "Exzessives Gaming ist eine Vorstufe der Gaming Disorder.", correct: false }] },
+                { question: "Welchen therapeutischen Ansatz hält die Forschung am vielversprechendsten für die Behandlung der Gaming Disorder?", answers: [{ text: "Psychoanalyse.", correct: false }, { text: "Gestalttherapie.", correct: false }, { text: "Kognitive Verhaltenstherapie (CBT).", correct: true }, { text: "Traumatherapie.", correct: false }, { text: "Hypnotherapie.", correct: false }] },
+                { question: "Welche ethische Problematik ergibt sich bei der Diagnose von Gaming Disorder bei Kindern und Jugendlichen?", answers: [{ text: "Die mangelnde Akzeptanz der Eltern.", correct: false }, { text: "Die Gefahr einer pathologischen Überdiagnose von normalem Freizeitverhalten.", correct: true }, { text: "Die fehlende rechtliche Grundlage für eine Zwangseinweisung.", correct: false }, { text: "Die unzureichende Studienlage.", correct: false }, { text: "Kinder können die Diagnose nicht verstehen.", correct: false }] },
+                { question: "Welches der folgenden Merkmale ist **kein** Kernkriterium der Gaming Disorder nach der ICD-11?", answers: [{ text: "Beeinträchtigung in wichtigen Funktionsbereichen.", correct: false }, { text: "Fortsetzung des Verhaltens trotz negativer Konsequenzen.", correct: false }, { text: "Ein Suchtgedächtnis für das Spielen.", correct: true }, { text: "Mangelnde Kontrolle über das Spielverhalten.", correct: false }, { text: "Priorisierung des Spielens vor anderen Lebensinteressen.", correct: false }] },
+                { question: "Welches neurobiologische Modell beschreibt am besten, wie die Dopamin-Ausschüttung das Suchtverhalten verstärkt?", answers: [{ text: "Das Modell der Sensibilisierung.", correct: true }, { text: "Das Modell der Habituation.", correct: false }, { text: "Das Modell des kognitiven Dissonanz.", correct: false }, { text: "Das Modell der sozialen Lerntheorie.", correct: false }, { text: "Das Modell der Selbstwirksamkeit.", correct: false }] },
+                { question: "Welche Rolle spielt das psychologische Konzept des 'Flow-Zustands' bei der Entstehung von Gaming Disorder?", answers: [{ text: "Es ist eine direkte Ursache für die Sucht.", correct: false }, { text: "Es ist ein schützender Faktor.", correct: false }, { text: "Es kann das süchtige Verhalten untermauern, indem es eine Flucht aus der Realität ermöglicht.", correct: true }, { text: "Es hat keine Relevanz.", correct: false }, { text: "Es ist nur bei Gelegenheitsspielern relevant.", correct: false }] },
+                { question: "Welches Element von Online-Multiplayer-Spielen (MMOs) trägt am meisten zur Aufrechterhaltung süchtigen Verhaltens bei?", answers: [{ text: "Die visuell ansprechende Grafik.", correct: false }, { text: "Das soziale Element und die Bindung an eine Gilde.", correct: true }, { text: "Die niedrige Einstiegshürde.", correct: false }, { text: "Die Musik und Soundeffekte.", correct: false }, { text: "Die einfache Steuerung.", correct: false }] },
+                { question: "Welcher Mechanismus in Spielen, wie zum Beispiel bei Lootboxen oder täglichen Boni, kann das Spielverhalten besonders manipulieren?", answers: [{ text: "Feste Intervallverstärkung.", correct: false }, { text: "Variable Intervallverstärkung.", correct: true }, { text: "Negative Verstärkung.", correct: false }, { text: "Positive Bestrafung.", correct: false }, { text: "Shaping.", correct: false }] },
+                { question: "Welche der folgenden Interventionen ist am effektivsten für die Prävention von Gaming Disorder bei Jugendlichen?", answers: [{ text: "Ein Verbot des Gamings.", correct: false }, { text: "Aufklärung über Risiken im schulischen Kontext.", correct: true }, { text: "Die alleinige medikamentöse Behandlung.", correct: false }, { text: "Ein verpflichtender Entzug.", correct: false }, { text: "Eine Gruppentherapie ohne Elternbeteiligung.", correct: false }] },
+                { question: "Was sind die wirtschaftlichen Interessen der Gaming-Industrie in Bezug auf Suchtprävention?", answers: [{ text: "Die Industrie ist aktiv an der Suchtprävention beteiligt.", correct: false }, { text: "Die Industrie hat kein Interesse an der Prävention.", correct: false }, { text: "Die Industrie hat ein wirtschaftliches Interesse am Verbleib der Spieler.", correct: true }, { text: "Die Industrie hat ein Interesse an einer gesetzlichen Regulierung.", correct: false }, { text: "Das Thema ist irrelevant für die Industrie.", correct: false }] },
+                { question: "Welche Rolle spielt das 'Coping'-Verhalten im Kontext der Gaming Disorder?", answers: [{ text: "Es ist ein primäres Kriterium für die Diagnose.", correct: false }, { text: "Es beschreibt eine gesunde Bewältigungsstrategie.", correct: false }, { text: "Gaming wird als maladaptive Bewältigungsstrategie genutzt, um negative Gefühle zu vermeiden.", correct: true }, { text: "Es ist eine gesunde Alternative zur Psychotherapie.", correct: false }, { text: "Es beschreibt die Fähigkeit, das Gaming zu kontrollieren.", correct: false }] },
+                { question: "Warum ist die psychotherapeutische Behandlung bei Gaming Disorder oft komplex?", answers: [{ text: "Es gibt keine wirksamen Therapien.", correct: false }, { text: "Wegen der fehlenden Studienlage.", correct: false }, { text: "Wegen der oft begleitenden komorbiden Störungen, die ebenfalls behandelt werden müssen.", correct: true }, { text: "Patienten lehnen die Therapie ab.", correct: false }, { text: "Gaming Disorder wird nicht als Störung anerkannt.", correct: false }] }
+            ]
+        }
+    };
+
+    // DOM Elements
+    const selectionContainer = document.getElementById("selection-container");
+    const quizSelector = document.getElementById("quiz-selector");
+    const startSelectedQuizButton = document.getElementById("start-selected-quiz-button");
+    const quizContainer = document.getElementById("quiz-container");
+    const scoreContainer = document.getElementById("score-container");
+    const questionElement = document.getElementById("question-text");
+    const answerButtonsElement = document.getElementById("answer-buttons");
+    const nextButton = document.getElementById("next-button");
+    const restartButton = document.getElementById("restart-button");
+    const progressBar = document.getElementById("progress-bar");
+    const questionCounter = document.getElementById("question-counter");
+    const scoreText = document.getElementById("score-text");
+    const pageTitle = document.querySelector("title");
+    const headerTitle = document.getElementById("header-title");
+
+    // --- DYNAMISCHE QUIZ-AUSWAHL ---
+    // Funktion, um die Quiz-Namen für die Anzeige zu formatieren (z.B. "gaming-disorder" -> "Gaming Disorder")
+    function formatQuizNameForDisplay(key) {
+        return key
+            .split('-')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+
+    // Funktion, um das Dropdown-Menü zu füllen und alphabetisch zu sortieren
+    function populateAndSortQuizSelector() {
+        const quizOptions = Object.keys(quizData).map(key => ({
+            value: key,
+            text: formatQuizNameForDisplay(key)
+        }));
+
+        // Alphabetisch nach dem Anzeigetext sortieren
+        quizOptions.sort((a, b) => a.text.localeCompare(b.text));
+
+        // Bestehende Optionen leeren (falls vorhanden)
+        quizSelector.innerHTML = '';
+
+        // Neue, sortierte Optionen hinzufügen
+        quizOptions.forEach(optionData => {
+            const optionElement = document.createElement('option');
+            optionElement.value = optionData.value;
+            optionElement.textContent = optionData.text;
+            quizSelector.appendChild(optionElement);
+        });
+    }
+    populateAndSortQuizSelector();
+
+    // State variables
+    let currentQuizQuestions = [];
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let answerGiven = false;
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        resetState();
+        answerGiven = false;
+        let currentQuestion = currentQuizQuestions[currentQuestionIndex];
+        let questionNo = currentQuestionIndex + 1;
+
+        progressBar.style.width = `${(questionNo / currentQuizQuestions.length) * 100}%`;
+        questionCounter.innerHTML = `Frage ${questionNo} von ${currentQuizQuestions.length}`;
+        questionElement.innerHTML = currentQuestion.question;
+
+        currentQuestion.answers.forEach(answer => {
+            const label = document.createElement("label");
+            label.className = "flex items-center p-4 rounded-lg border border-primary/20 dark:border-primary/30 cursor-pointer transition-all hover:border-primary dark:hover:border-primary";
+
+            const radio = document.createElement("input");
+            radio.type = "radio";
+            radio.name = "quiz-answer";
+            radio.className = "form-radio h-5 w-5 shrink-0 text-primary bg-transparent border-2 border-primary/30 dark:border-primary/40 focus:ring-0 focus:ring-offset-0 checked:bg-primary";
+
+            const span = document.createElement("span");
+            span.className = "ml-4 text-base font-medium text-gray-800 dark:text-gray-200";
+            span.innerHTML = answer.text;
+
+            label.appendChild(radio);
+            label.appendChild(span);
+            answerButtonsElement.appendChild(label);
+
+            if (answer.correct) {
+                label.dataset.correct = "true";
+            }
+            label.addEventListener("click", selectAnswer);
+        });
+    }
+
+    function resetState() {
+        nextButton.style.display = "none";
+        while (answerButtonsElement.firstChild) {
+            answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+        }
+    }
+
+    function selectAnswer(e) {
+        if (answerGiven) return;
+        answerGiven = true;
+
+        const selectedLabel = e.currentTarget;
+        const isCorrect = selectedLabel.dataset.correct === "true";
+
+        if (isCorrect) {
+            score++;
+        }
+
+        Array.from(answerButtonsElement.children).forEach(label => {
+            const radio = label.querySelector('input[type="radio"]');
+            radio.disabled = true;
+            label.classList.remove("cursor-pointer", "hover:border-primary", "dark:hover:border-primary");
+
+            if (label.dataset.correct === "true") {
+                label.classList.add("answer-correct");
+            } else if (label === selectedLabel) {
+                label.classList.add("answer-incorrect");
+            } else {
+                label.classList.add("faded");
+            }
+        });
+
+        nextButton.style.display = "block";
+    }
+
+    function showScore() {
+        quizContainer.classList.add("hidden");
+        scoreContainer.classList.remove("hidden");
+        scoreText.innerHTML = `Dein Endergebnis: ${score} von ${currentQuizQuestions.length} möglichen Punkten.`;
+    }
+
+    function handleNextButton() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < currentQuizQuestions.length) {
+            showQuestion();
+        } else {
+            showScore();
+        }
+    }
+
+    nextButton.addEventListener("click", handleNextButton);
+
+    restartButton.addEventListener("click", () => {
+        scoreContainer.classList.add("hidden");
+        selectionContainer.classList.remove("hidden");
+        pageTitle.textContent = "QuizMaster";
+        headerTitle.textContent = "QuizMaster";
+    });
+
+    startSelectedQuizButton.addEventListener("click", () => {
+        const selectedQuizKey = quizSelector.value;
+        const selectedQuiz = quizData[selectedQuizKey];
+
+        currentQuizQuestions = selectedQuiz.questions;
+        const selectedOptionText = quizSelector.options[quizSelector.selectedIndex].text;
+        pageTitle.textContent = `QuizMaster - ${selectedOptionText}`;
+        headerTitle.textContent = selectedQuiz.title;
+
+        selectionContainer.classList.add("hidden");
+        quizContainer.classList.remove("hidden");
+        startQuiz();
+    });
+</script>
+</body>
+</html>
