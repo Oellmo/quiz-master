@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuizMaster</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: { "display": ["Work Sans"] },
+                },
+            },
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="flex flex-col min-h-screen">
+    <header class="bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-sm sticky top-0 z-10 border-b border-primary/20 dark:border-primary/30">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <div class="text-primary">
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path></svg>
+                    </div>
+                    <h1 id="header-title" class="text-xl font-bold text-gray-900 dark:text-white">QuizMaster</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <!-- Quiz Selection Container -->
+        <div id="selection-container" class="max-w-4xl mx-auto bg-white dark:bg-background-dark/50 rounded-xl shadow-lg border border-primary/20 dark:border-primary/30 overflow-hidden p-6 sm:p-8 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Wähle ein Quiz aus</h2>
+            <div class="max-w-xs mx-auto">
+                <label for="quiz-selector" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 text-left">Quiz-Thema:</label>
+                <select id="quiz-selector" name="quiz-selector" class="block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white py-2 pl-3 pr-10 text-base focus:border-primary focus:outline-none focus:ring-primary sm:text-sm">
+                    <!-- Optionen werden dynamisch per JavaScript geladen -->
+                </select>
+            </div>
+            <button id="start-selected-quiz-button" class="mt-8 px-8 py-3 rounded-lg font-semibold bg-primary text-white hover:bg-opacity-90 transition-colors">
+                Quiz starten
+            </button>
+        </div>
+
+        <!-- Main Quiz Container -->
+        <div id="quiz-container" class="hidden max-w-4xl mx-auto bg-white dark:bg-background-dark/50 rounded-xl shadow-lg border border-primary/20 dark:border-primary/30 overflow-hidden">
+            <div class="p-6 sm:p-8">
+                <div class="mb-6">
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Fortschritt</p>
+                    <div class="mt-2 h-2.5 w-full rounded-full bg-primary/20 dark:bg-primary/30">
+                        <div id="progress-bar" class="h-2.5 rounded-full bg-primary transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <p id="question-counter" class="mt-2 text-sm text-gray-500 dark:text-gray-400">Frage wird geladen...</p>
+                </div>
+                <h2 id="question-text" class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Frage wird geladen...</h2>
+                <div id="answer-buttons" class="space-y-4">
+                    <!-- Answers will be dynamically inserted here -->
+                </div>
+            </div>
+            <div class="px-6 sm:px-8 py-4 bg-primary/5 dark:bg-primary/10 border-t border-primary/20 dark:border-primary/30 flex justify-end items-center">
+                <button id="next-button" class="px-6 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-opacity-90 transition-colors" style="display: none;">
+                    Nächste Frage
+                </button>
+            </div>
+        </div>
+
+        <!-- Score Container (initially hidden) -->
+        <div id="score-container" class="hidden max-w-4xl mx-auto bg-white dark:bg-background-dark/50 rounded-xl shadow-lg border border-primary/20 dark:border-primary/30 overflow-hidden">
+             <div class="p-8 sm:p-12 text-center">
+                <h2 id="score-text" class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6">Dein Ergebnis</h2>
+             </div>
+             <div class="px-6 sm:px-8 py-4 bg-primary/5 dark:bg-primary/10 border-t border-primary/20 dark:border-primary/30 flex justify-center items-center">
+                <button id="restart-button" class="px-6 py-2 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-opacity-90 transition-colors">
+                    Quiz neustarten
+                </button>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>

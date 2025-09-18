@@ -1,0 +1,19 @@
+.answer-correct {
+    background-color: #d1fae5 !important; /* Tailwind green-100 */
+    border-color: #10b981 !important; /* Tailwind green-500 */
+}
+.dark .answer-correct {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    border-color: #10b981 !important;
+}
+.answer-incorrect {
+    background-color: #fee2e2 !important; /* Tailwind red-100 */
+    border-color: #ef4444 !important; /* Tailwind red-500 */
+}
+.dark .answer-incorrect {
+    background-color: rgba(239, 68, 68, 0.2) !important;
+    border-color: #ef4444 !important;
+}
+.faded {
+    opacity: 0.6;
+}
